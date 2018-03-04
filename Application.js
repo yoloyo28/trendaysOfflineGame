@@ -5,7 +5,8 @@ javascript: (
 
     let isMoving = false;
     let isRotating = false;
-    let canShoot = true;
+    let canShootBullets = true;
+    let canShootFavorites = true;
 
     let playerX = 800;
     let playerY = 100;
@@ -103,7 +104,6 @@ javascript: (
     }
 
     function setSpeedActive(index) {
-      console.log(index);
       let speedLabels = document.getElementsByClassName("rc-slider-mark-text");
 
       for (let i = 0; i < speedLabels.length; i++) {
@@ -210,14 +210,27 @@ javascript: (
       }
 
       if (event.code == "Space") {
-        if (canShoot) {
-          canShoot = false;
+        if (canShootBullets) {
+          canShootBullets = false;
 
-          createBullet();
+          createBullet(false);
 
           setTimeout(shootTimeout, 20);
           function shootTimeout() {
-            canShoot = true;
+            canShootBullets = true;
+          }
+        }
+      }
+
+      if (event.code == "KeyL") {
+        if (canShootFavorites) {
+          canShootFavorites = false;
+
+          createBullet(true);
+
+          setTimeout(shootTimeout, 20);
+          function shootTimeout() {
+            canShootFavorites = true;
           }
         }
       }
@@ -253,15 +266,17 @@ javascript: (
       autoScrollId = setTimeout(() => pageScroll(speed), scrollTimeout);
     }
 
-    if (false) pageScroll();
-
-
     /* Collision Check */
     function checkOverlap(firstElement) {
       let posts = feedContainer.getElementsByClassName("grid-item-3");
 
       let overlap = false;
       for (let i = 0; i < posts.length; i++) {
+        if (posts[i].style.visibility == "hidden") {
+          console.log("HEY");
+          continue;
+        }
+
         let rect1 = firstElement.getBoundingClientRect();
         let rect2 = posts[i].getBoundingClientRect();
         overlap = !(rect1.right < rect2.left ||
@@ -295,19 +310,26 @@ javascript: (
 
 
     /* Bullet Creation */
-    function createBullet() {
+    function createBullet(isFavoriteMissile) {
       let bulletContainer = document.createElement("div");
       bulletContainer.style.position = "fixed";
       bulletContainer.style.top = (playerY + 50) + "px";
       bulletContainer.style.left = (playerX - 18) + "px";
-      bulletContainer.style.fontSize = "24px";
       bulletContainer.style.transform = `rotate(${playerRotation + 90}deg)`;
       bulletContainer.className = "text-greensea";
 
-      let bulletImg = document.createElement("i");
-      bulletImg.className = "icon-trendays";
+      if (isFavoriteMissile) {
+        bulletContainer.style.fontSize = "18px";
+        let bulletImg = document.createElement("span");
+        bulletImg.innerText = "FAVORITE";
+        bulletContainer.appendChild(bulletImg);
+      } else {
+        bulletContainer.style.fontSize = "24px";
+        let bulletImg = document.createElement("i");
+        bulletImg.className = "icon-trendays";
+        bulletContainer.appendChild(bulletImg);
+      }
 
-      bulletContainer.appendChild(bulletImg);
       feedContainer.appendChild(bulletContainer);
 
       const bulletRotation = playerRotation;
@@ -331,16 +353,20 @@ javascript: (
           clearInterval(bulletMovingId);
           bulletContainer.remove();
 
-          if (collision.style.opacity == "") collision.style.opacity = "1";
-
-          let newOpacity = parseFloat(collision.style.opacity) - 0.25;
-
-          if (newOpacity <= 0) {
-            points += 10;
-            pointsLabel.innerHTML = `${points} points`;
-            collision.remove();
+          if (isFavoriteMissile) {
+            document.getElementsByName(`postVote-${collision.id}`)[0].click();
           } else {
+            if (collision.style.opacity == "") collision.style.opacity = "1";
+
+            let newOpacity = parseFloat(collision.style.opacity) - 0.25;
+
             collision.style.opacity = newOpacity.toString();
+
+            if (newOpacity <= 0) {
+              points += 10;
+              collision.style.visibility = "hidden";
+              pointsLabel.innerHTML = `${points} points`;
+            }
           }
         }
 

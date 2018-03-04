@@ -1,6 +1,7 @@
 javascript: (
   function () {
     let points = 0;
+    let scrollSpeed = 0;
 
     let isMoving = false;
     let isRotating = false;
@@ -31,12 +32,93 @@ javascript: (
     feedContainer.removeAttribute("class");
 
     let pointsLabel = document.createElement("div");
-    pointsLabel.style.position = "absolute";
-    pointsLabel.style.left = "47%";
+    pointsLabel.style.position = "fixed";
+    pointsLabel.style.width = "-webkit-fill-available";
     pointsLabel.style.fontSize = "30px";
+    pointsLabel.style.textAlign = "center";
+    pointsLabel.style.zIndex = "1000";
     pointsLabel.className = "text-red";
     pointsLabel.innerHTML = `${points} points`;
-    document.getElementById("main-navbar").appendChild(pointsLabel);
+    document.body.appendChild(pointsLabel);
+
+    /* Scroll Time Filter */
+    document.body.style.overflow = "hidden";
+    let selectSpeedTxt = document.createElement("div");
+    selectSpeedTxt.innerText = "^ Select Your Speed ^";
+    selectSpeedTxt.style.position = "absolute";
+    selectSpeedTxt.style.width = "-webkit-fill-available";
+    selectSpeedTxt.style.top = "40%";
+    selectSpeedTxt.style.zIndex = "1000";
+    selectSpeedTxt.style.textAlign = "center";
+    selectSpeedTxt.style.fontSize = "64px";
+
+    let thenStartTxt = document.createElement("span");
+    thenStartTxt.innerHTML = "&or; Then Start &or;";
+    thenStartTxt.style.fontSize = "18px";
+
+    let buttonStart = document.createElement("button");
+    buttonStart.className = "myBtn";
+    buttonStart.innerText = "START";
+    buttonStart.style.fontSize = "32px";
+    buttonStart.onclick = startGame;
+
+    selectSpeedTxt.appendChild(document.createElement("br"));
+    selectSpeedTxt.appendChild(thenStartTxt);
+    selectSpeedTxt.appendChild(document.createElement("br"));
+    selectSpeedTxt.appendChild(buttonStart);
+
+    if (true) document.body.appendChild(selectSpeedTxt);
+
+    document.getElementsByClassName("filterTrigger")[0].click();
+    let filters = document.getElementsByClassName("rc-slider-mark-text");
+    let filterParent = filters[0].parentElement;
+
+    while (filters.length > 0) {
+      filters[0].remove();
+    }
+
+    let selectedSpeed = 5;
+    const scrollSpeeds = ["Not Moving", "Insanely Slow", "Really Slow", "Slow", "Fastly Slow", "Medium", "Slowly Fast", "Fast", "Really Fast", "Insanely Fast", "Instant Death"];
+    const actualScrollSpeeds = [999999, 100, 45, 30, 15, 11, 2, 4, 6, 8, 10];
+    let sliderDots = document.getElementsByClassName("rc-slider-dot");
+    for (let i = 0; i < scrollSpeeds.length; i++) {
+      let newFilter = document.createElement("span");
+      newFilter.className = "rc-slider-mark-text";
+      sliderDots[i].className = "rc-slider-dot";
+      newFilter.style = `width: 9%; margin-left: -4.5%; left: ${i * 10}%; font-weight: bold`;
+      newFilter.onclick = () => setSpeedActive(i);
+      sliderDots[i].onclick = () => setSpeedActive(i);
+
+      if (i == selectedSpeed) {
+        sliderDots[i].className += " rc-slider-dot-active";
+        newFilter.className += " rc-slider-mark-text-active";
+        document.getElementsByClassName("rc-slider-handle")[0].style.left = (i * 10) + "%";
+      }
+
+      let value = document.createElement("div");
+      value.innerHTML = scrollSpeeds[i];
+      newFilter.appendChild(value);
+
+      filterParent.appendChild(newFilter);
+    }
+
+    function setSpeedActive(index) {
+      console.log(index);
+      let speedLabels = document.getElementsByClassName("rc-slider-mark-text");
+
+      for (let i = 0; i < speedLabels.length; i++) {
+        speedLabels[i].className = "rc-slider-mark-text";
+      }
+
+      speedLabels[index].className = "rc-slider-mark-text rc-slider-mark-text-active";
+
+      selectedSpeed = index;
+    }
+
+    function startGame() {
+      selectSpeedTxt.remove();
+      pageScroll(actualScrollSpeeds[selectedSpeed]);
+    };
 
 
     function calculateMoveDirection(rotationDirection) {
@@ -158,12 +240,20 @@ javascript: (
     /* Auto Scroll */
     let autoScrollId;
 
-    function pageScroll() {
-      window.scrollBy(0, 1);
-      autoScrollId = setTimeout(pageScroll, 10);
+    function pageScroll(speed) {
+      let scrollStep = 1;
+      let scrollTimeout = speed;
+
+      if (speed <= 10) {
+        scrollStep = speed;
+        scrollTimeout = 10;
+      }
+
+      window.scrollBy(0, scrollStep);
+      autoScrollId = setTimeout(() => pageScroll(speed), scrollTimeout);
     }
 
-    if (true) pageScroll();
+    if (false) pageScroll();
 
 
     /* Collision Check */

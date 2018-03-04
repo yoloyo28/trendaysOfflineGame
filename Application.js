@@ -5,8 +5,11 @@ javascript: (
 
     let isMoving = false;
     let isRotating = false;
+    let canMove = true;
     let canShootBullets = true;
     let canShootFavorites = true;
+    let canShootPrices = true;
+    let canShootDetails = true;
 
     let playerX = 800;
     let playerY = 100;
@@ -44,10 +47,21 @@ javascript: (
 
     /* Scroll Time Filter */
     document.body.style.overflow = "hidden";
+    let backdrop = document.createElement("div");
+    backdrop.style.left = 0;
+    backdrop.style.right = 0;
+    backdrop.style.top = 0;
+    backdrop.style.bottom = 0;
+    backdrop.style.backgroundColor = "black";
+    backdrop.style.opacity = "0.2f";
+    backdrop.style.zIndex = "999";
+    document.body.appendChild(backdrop);
+
     let selectSpeedTxt = document.createElement("div");
     selectSpeedTxt.innerText = "^ Select Your Speed ^";
     selectSpeedTxt.style.position = "absolute";
-    selectSpeedTxt.style.width = "-webkit-fill-available";
+    selectSpeedTxt.style.left = "0";
+    selectSpeedTxt.style.right = "0";
     selectSpeedTxt.style.top = "40%";
     selectSpeedTxt.style.zIndex = "1000";
     selectSpeedTxt.style.textAlign = "center";
@@ -151,86 +165,114 @@ javascript: (
     let verticalMovingId = null;
 
     document.body.addEventListener("keydown", function onEvent(event) {
-      if (!isRotating) {
-        if (event.code == "KeyA") {
-          horizontalMovingId = setInterval(frame, 5);
-          function frame() {
-            isRotating = true;
-            --playerRotation;
-            if (playerRotation <= 0) {
-              playerRotation += 360;
+      if (canMove) {
+        if (!isRotating) {
+          if (event.code == "KeyA") {
+            horizontalMovingId = setInterval(frame, 5);
+            function frame() {
+              isRotating = true;
+              --playerRotation;
+              if (playerRotation <= 0) {
+                playerRotation += 360;
+              }
+              playerContainer.style.transform = `rotate(${playerRotation}deg)`;
             }
-            playerContainer.style.transform = `rotate(${playerRotation}deg)`;
-          }
-        } else if (event.code == "KeyD") {
-          horizontalMovingId = setInterval(frame, 5);
-          function frame() {
-            isRotating = true;
-            ++playerRotation;
-            if (playerRotation >= 360) {
-              playerRotation -= 360;
-            }
-            playerContainer.style.transform = `rotate(${playerRotation}deg)`;
-          }
-        }
-      }
-      if (!isMoving) {
-        if (event.code == "KeyW") {
-          verticalMovingId = setInterval(frame, 5);
-          function frame() {
-            isMoving = true;
-
-            let values = calculateMoveDirection(playerRotation);
-
-            playerX += values.valueX * 2;
-            playerContainer.style.left = playerX + 'px';
-
-            if (values.valueY > 0 || playerY > 0) {
-              playerY += values.valueY * 2;
-              playerContainer.style.top = playerY + 'px';
+          } else if (event.code == "KeyD") {
+            horizontalMovingId = setInterval(frame, 5);
+            function frame() {
+              isRotating = true;
+              ++playerRotation;
+              if (playerRotation >= 360) {
+                playerRotation -= 360;
+              }
+              playerContainer.style.transform = `rotate(${playerRotation}deg)`;
             }
           }
         }
-        if (event.code == "KeyS") {
-          verticalMovingId = setInterval(frame, 5);
-          function frame() {
-            isMoving = true;
+        if (!isMoving) {
+          if (event.code == "KeyW") {
+            verticalMovingId = setInterval(frame, 5);
+            function frame() {
+              isMoving = true;
 
-            let values = calculateMoveDirection(playerRotation);
+              let values = calculateMoveDirection(playerRotation);
 
-            playerX -= values.valueX * 2;
-            playerContainer.style.left = playerX + 'px';
+              playerX += values.valueX * 2;
+              playerContainer.style.left = playerX + 'px';
 
-            if (values.valueY < 0 || playerY > 0) {
-              playerY -= values.valueY * 2;
-              playerContainer.style.top = playerY + 'px';
+              if (values.valueY > 0 || playerY > 0) {
+                playerY += values.valueY * 2;
+                playerContainer.style.top = playerY + 'px';
+              }
+            }
+          }
+          if (event.code == "KeyS") {
+            verticalMovingId = setInterval(frame, 5);
+            function frame() {
+              isMoving = true;
+
+              let values = calculateMoveDirection(playerRotation);
+
+              playerX -= values.valueX * 2;
+              playerContainer.style.left = playerX + 'px';
+
+              if (values.valueY < 0 || playerY > 0) {
+                playerY -= values.valueY * 2;
+                playerContainer.style.top = playerY + 'px';
+              }
             }
           }
         }
-      }
 
-      if (event.code == "Space") {
-        if (canShootBullets) {
-          canShootBullets = false;
+        if (event.code == "Space") {
+          if (canShootBullets) {
+            canShootBullets = false;
 
-          createBullet(false);
+            createBullet();
 
-          setTimeout(shootTimeout, 20);
-          function shootTimeout() {
-            canShootBullets = true;
+            setTimeout(shootTimeout, 20);
+            function shootTimeout() {
+              canShootBullets = true;
+            }
           }
         }
-      }
 
-      if (event.code == "KeyL") {
-        if (canShootFavorites) {
-          canShootFavorites = false;
+        if (event.code == "KeyF") {
+          if (canShootFavorites) {
+            canShootFavorites = false;
 
-          createBullet(true);
+            createBullet(true);
 
-          setTimeout(shootTimeout, 20);
-          function shootTimeout() {
-            canShootFavorites = true;
+            setTimeout(shootTimeout, 20);
+            function shootTimeout() {
+              canShootFavorites = true;
+            }
+          }
+        }
+
+        if (event.code == "KeyP") {
+          if (canShootPrices) {
+            canShootPrices = false;
+
+            createBullet(false, true);
+
+            setTimeout(shootTimeout, 20);
+            function shootTimeout() {
+              canShootPrices = true;
+            }
+          }
+        }
+
+        if (event.code == "KeyO") {
+          if (canShootDetails) {
+            canShootDetails = false;
+
+            createBullet(false, false, true);
+
+            setTimeout(shootTimeout, 20);
+            function shootTimeout() {
+              canShootDetails = true;
+            }
           }
         }
       }
@@ -273,7 +315,6 @@ javascript: (
       let overlap = false;
       for (let i = 0; i < posts.length; i++) {
         if (posts[i].style.visibility == "hidden") {
-          console.log("HEY");
           continue;
         }
 
@@ -302,6 +343,7 @@ javascript: (
         clearTimeout(horizontalMovingId);
         clearTimeout(verticalMovingId);
         alert(`You Died. You finished with ${points} points!`);
+        location.reload();
       } else {
         deathCheckId = setTimeout(checkDeath, 500);
       }
@@ -310,7 +352,7 @@ javascript: (
 
 
     /* Bullet Creation */
-    function createBullet(isFavoriteMissile) {
+    function createBullet(isFavoriteMissile, isPriceMissile, isDetailMissile) {
       let bulletContainer = document.createElement("div");
       bulletContainer.style.position = "fixed";
       bulletContainer.style.top = (playerY + 50) + "px";
@@ -322,6 +364,16 @@ javascript: (
         bulletContainer.style.fontSize = "18px";
         let bulletImg = document.createElement("span");
         bulletImg.innerText = "FAVORITE";
+        bulletContainer.appendChild(bulletImg);
+      } else if (isPriceMissile) {
+        bulletContainer.style.fontSize = "18px";
+        let bulletImg = document.createElement("span");
+        bulletImg.innerText = "PRICES";
+        bulletContainer.appendChild(bulletImg);
+      } else if (isDetailMissile) {
+        bulletContainer.style.fontSize = "18px";
+        let bulletImg = document.createElement("span");
+        bulletImg.innerText = "DETAILS";
         bulletContainer.appendChild(bulletImg);
       } else {
         bulletContainer.style.fontSize = "24px";
@@ -355,6 +407,20 @@ javascript: (
 
           if (isFavoriteMissile) {
             document.getElementsByName(`postVote-${collision.id}`)[0].click();
+          } else if (isPriceMissile) {
+            let overlayContainer = collision.children[1].children[1];
+            overlayContainer.style.opacity = "1";
+            for (let i = 0; i < overlayContainer.children.length - 1; i++) {
+              overlayContainer.children[i].style.display = "block";
+            }
+          } else if (isDetailMissile) {
+            collision.lastElementChild.lastElementChild.click();
+            clearTimeout(autoScrollId);
+            canMove = false;
+            setTimeout(() => {
+              document.getElementsByClassName("modalBackdrop")[0].onclick = unPause;
+              document.getElementsByClassName("closeIcon")[0].onclick = unPause;
+            }, 400);
           } else {
             if (collision.style.opacity == "") collision.style.opacity = "1";
 
@@ -374,6 +440,11 @@ javascript: (
           clearInterval(bulletMovingId);
           bulletContainer.remove();
         }
+
+        function unPause() {
+          canMove = true;
+          pageScroll(actualScrollSpeeds[selectedSpeed]);
+        };
       }
     }
   }

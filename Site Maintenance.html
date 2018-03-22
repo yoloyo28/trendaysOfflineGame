@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<!-- saved from url=(0024)https://www.trendays.ca/ -->
+<html style="height: 100%;">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+  <title>Site Maintenance</title>
+  <style>
+    body {
+      text-align: center;
+      padding: 150px;
+      font: 20px Helvetica, sans-serif;
+      color: #333;
+    }
+
+    article {
+      display: block;
+      text-align: left;
+      width: 650px;
+      margin: 0 auto;
+    }
+
+    a {
+      color: #dc8100;
+      text-decoration: none;
+    }
+
+      a:hover {
+        color: #333;
+        text-decoration: none;
+      }
+  </style>
+  <script type="text/javascript">
+    function start() {
+
+      const scrollingSpeed = 5;
+      const isBackgroundScrolling = true;
+
+      const minHeight = 50;
+      const maxHeight = window.innerHeight * 0.70;
+
+      const colors = ["blue","green", "purple", "red"];
+
+      document.getElementById("gameInfo").remove();
+
+      document.body.style.backgroundImage = "url(\"assets/backgroundv2.png\")";
+      document.body.style.backgroundRepeat = "repeat-x";
+      document.body.style.backgroundSize = "auto 100%";
+
+      let header = document.getElementById("header");
+      let paragraph = document.getElementById("paragraph");
+
+      let paragraphSize = parseInt(paragraph.style.fontSize);
+      let headerSize = parseInt(header.style.fontSize);
+
+      let offlineTextInterval = setInterval(function () {
+        let isHeaderVisible = headerSize > 0;
+        let isParagraphVisible = paragraphSize > 0;
+
+        if (isHeaderVisible) {
+          --headerSize;
+          header.style.fontSize = headerSize + "px";
+        }
+        if (isParagraphVisible) {
+          --paragraphSize;
+          paragraph.style.fontSize = paragraphSize + "px";
+        }
+
+        if (!isHeaderVisible && !isParagraphVisible) {
+          header.remove();
+          paragraph.remove();
+
+          document.getElementsByTagName("article")[0].remove();
+          document.getElementsByTagName("style")[0].remove();
+
+          clearInterval(offlineTextInterval);
+        }
+      }, scrollingSpeed);
+
+      let backgroundScrollingOffset = window.innerWidth;
+
+      if (isBackgroundScrolling) {
+        let scrollingBackground = setInterval(function () {
+          backgroundScrollingOffset -= 1;
+
+          document.body.style.backgroundPositionX = backgroundScrollingOffset + "px";
+        }, 10);
+      }
+
+      // Create Player
+      let playerPosX = 100;
+      let playerPosY = window.innerHeight / 2.5;
+      let isMoving = false;
+      let canShootBullets = true;
+
+      let player = document.createElement("img");
+      player.src = `assets/trendaysLogov2.png`;
+      player.style.position = "fixed";
+      player.style.top = playerPosY + "px";
+      player.style.left = playerPosX + "px";
+      player.style.transform = "rotate(90deg)";
+      player.width = 100;
+      document.body.appendChild(player);
+
+      let verticalMovingId = null;
+
+      document.body.addEventListener("keydown", function onEvent(event) {
+        if (!isMoving) {
+          if (event.code == "KeyW") {
+            verticalMovingId = setInterval(function () {
+              isMoving = true;
+
+              if (playerPosY > 25) {
+                --playerPosY;
+              }
+
+              player.style.top = playerPosY + 'px';
+            }, 1);
+          }
+          if (event.code == "KeyS") {
+            verticalMovingId = setInterval(function () {
+              isMoving = true;
+
+              if (playerPosY < maxHeight) {
+                ++playerPosY;
+              }
+
+              player.style.top = playerPosY + 'px';
+            }, 1);
+          }
+        }
+
+        if (event.code == "Space") {
+          if (canShootBullets) {
+            canShootBullets = false;
+
+            createBullet();
+
+            setTimeout(shootTimeout, 20);
+            function shootTimeout() {
+              canShootBullets = true;
+            }
+          }
+        }
+      });
+
+      document.body.addEventListener("keyup", function onEvent(event) {
+        if (event.code == "KeyW" || event.code == "KeyS") {
+          clearInterval(verticalMovingId);
+          isMoving = false;
+        }
+      });
+
+      function createRedBug(positionY) {
+        let frame = 1;
+        let color = colors[getRandomInt(0, colors.length - 1)];
+
+        let insect = document.createElement("img");
+        insect.src = `assets/${color}bug/frame${frame}.png`;
+        insect.style.transform = "scaleX(-1)";
+        insect.style.position = "fixed";
+        insect.style.top = positionY + "px";
+        insect.style.left = window.innerWidth + 100 + "px";
+        insect.width = 75;
+
+        const maxY = positionY + 5;
+        const minY = positionY - 5;
+        let goingUp = true;
+
+        document.body.appendChild(insect);
+
+        let animationInterval = setInterval(function () {
+          frame = frame == 1 ? 2 : 1;
+
+          insect.src = `assets/${color}bug/frame${frame}.png`;
+        }, 100);
+
+        let flightInterval = setInterval(function () {
+          let posY = parseInt(insect.style.top);
+
+          if (goingUp) {
+            ++posY;
+          } else {
+            --posY;
+          }
+
+          insect.style.top = posY + "px";
+
+          if (posY >= maxY) {
+            goingUp = false;
+          } else if (posY <= minY) {
+            goingUp = true;
+          }
+        }, 50);
+
+        let scrollingInterval = setInterval(function () {
+          let posX = parseInt(insect.style.left) - 1;
+
+          insect.style.left = posX + "px";
+
+          if (posX <= -75) {
+            clearInterval(animationInterval);
+            clearInterval(flightInterval);
+            clearInterval(scrollingInterval);
+            insect.remove();
+          }
+        }, scrollingSpeed * 1.75);
+      }
+
+      /* Bullet Creation */
+      function createBullet() {
+        let bulletImg = document.createElement("img");
+        bulletImg.src = "assets/trendays.png";
+        bulletImg.style.position = "fixed";
+        bulletImg.style.top = (playerPosY + 15) + "px";
+        bulletImg.style.left = (playerPosX + 30) + "px";
+        bulletImg.height = 50;
+
+        document.body.appendChild(bulletImg);
+
+        let bulletMovingId = setInterval(function () {
+          let bulletX = parseInt(bulletImg.style.left, 10);
+
+          bulletX += 3;
+          bulletImg.style.left = bulletX + 'px';
+
+          if (bulletX > window.innerWidth + 100) {
+            clearInterval(bulletMovingId);
+            bulletImg.remove();
+          }
+        }, 5);
+      }
+
+      // Random Monsters Generation
+      function spawnMonsters() {
+        let nextSpawn = getRandomInt(2000, 7000);
+
+        setTimeout(function () {
+          let positionY = getRandomInt(minHeight, maxHeight);
+
+          createRedBug(positionY);
+
+          spawnMonsters();
+        }, nextSpawn);
+      }
+
+      function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      spawnMonsters();
+    }
+  </script>
+</head>
+<body>
+  <article>
+    <h1 id="header" style="font-size: 50px;">We’ll be back soon!</h1>
+    <div id="paragraph" style="font-size: 20px;">
+      <p>Sorry for the inconvenience but we’re performing some maintenance at the moment. If you need to you can always <a href="mailto:contact@trendays.com">contact us</a>, otherwise we’ll be back online shortly!</p>
+      <p>— The Team</p>
+    </div>
+    <br />
+  </article>
+  <div id="gameInfo">
+    &#129155; While you wait, you can try this <strong>game</strong> to eliminate <u>bugs</u> for us &#129155;
+    <br />
+    <br />
+    <button type="button" onclick="start()">START</button>
+  </div>
+</body>
+</html>

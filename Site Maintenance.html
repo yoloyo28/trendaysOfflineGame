@@ -31,14 +31,17 @@
   </style>
   <script type="text/javascript">
     function start() {
+      let scrollingSpeed = 1;
+      let scrollingStep = 1;
 
-      const scrollingSpeed = 5;
       const isBackgroundScrolling = true;
 
       const minHeight = 50;
       const maxHeight = window.innerHeight * 0.70;
 
-      const colors = ["blue","green", "purple", "red"];
+      const colors = ["blue", "green", "purple", "red"];
+
+      let points = 0;
 
       document.getElementById("gameInfo").remove();
 
@@ -74,17 +77,34 @@
 
           clearInterval(offlineTextInterval);
         }
-      }, scrollingSpeed);
+      }, 5);
 
       let backgroundScrollingOffset = window.innerWidth;
 
       if (isBackgroundScrolling) {
-        let scrollingBackground = setInterval(function () {
-          backgroundScrollingOffset -= 1;
+        function scrollBackground() {
+          setTimeout(function () {
+            backgroundScrollingOffset -= scrollingStep + (points * 0.1);
 
-          document.body.style.backgroundPositionX = backgroundScrollingOffset + "px";
-        }, 10);
+            document.body.style.backgroundPositionX = backgroundScrollingOffset + "px";
+
+            scrollBackground();
+          }, scrollingSpeed);
+        }
+        scrollBackground();
       }
+
+      let pointsContainer = document.createElement("div");
+      pointsContainer.style.position = "fixed";
+      pointsContainer.style.top = "50px";
+      pointsContainer.style.fontSize = "40px";
+      pointsContainer.style.border = "2px solid black";
+      pointsContainer.style.padding = "20px";
+      pointsContainer.style.left = "50%";
+      pointsContainer.style.transform = "translate(-50%)";
+      pointsContainer.style.fontFamily = "Helvetica, sans-serif";
+      pointsContainer.innerText = "Bugs: " + points;
+      document.body.appendChild(pointsContainer);
 
       // Create Player
       let playerPosX = 100;
@@ -110,7 +130,7 @@
               isMoving = true;
 
               if (playerPosY > 25) {
-                --playerPosY;
+                playerPosY -= 2;
               }
 
               player.style.top = playerPosY + 'px';
@@ -121,7 +141,7 @@
               isMoving = true;
 
               if (playerPosY < maxHeight) {
-                ++playerPosY;
+                playerPosY += 2;
               }
 
               player.style.top = playerPosY + 'px';
@@ -154,28 +174,29 @@
         let frame = 1;
         let color = colors[getRandomInt(0, colors.length - 1)];
 
-        let insect = document.createElement("img");
-        insect.src = `assets/${color}bug/frame${frame}.png`;
-        insect.style.transform = "scaleX(-1)";
-        insect.style.position = "fixed";
-        insect.style.top = positionY + "px";
-        insect.style.left = window.innerWidth + 100 + "px";
-        insect.width = 75;
+        let bug = document.createElement("img");
+        bug.src = `assets/${color}bug/frame${frame}.png`;
+        bug.style.transform = "scaleX(-1)";
+        bug.style.position = "fixed";
+        bug.style.top = positionY + "px";
+        bug.style.left = window.innerWidth + 100 + "px";
+        bug.className = "bug";
+        bug.width = 75;
 
         const maxY = positionY + 5;
         const minY = positionY - 5;
         let goingUp = true;
 
-        document.body.appendChild(insect);
+        document.body.appendChild(bug);
 
         let animationInterval = setInterval(function () {
           frame = frame == 1 ? 2 : 1;
 
-          insect.src = `assets/${color}bug/frame${frame}.png`;
+          bug.src = `assets/${color}bug/frame${frame}.png`;
         }, 100);
 
         let flightInterval = setInterval(function () {
-          let posY = parseInt(insect.style.top);
+          let posY = parseInt(bug.style.top);
 
           if (goingUp) {
             ++posY;
@@ -183,7 +204,7 @@
             --posY;
           }
 
-          insect.style.top = posY + "px";
+          bug.style.top = posY + "px";
 
           if (posY >= maxY) {
             goingUp = false;
@@ -193,17 +214,17 @@
         }, 50);
 
         let scrollingInterval = setInterval(function () {
-          let posX = parseInt(insect.style.left) - 1;
+          let posX = parseInt(bug.style.left) - (scrollingStep + (points * 0.1)) * 1.25;
 
-          insect.style.left = posX + "px";
+          bug.style.left = posX + "px";
 
           if (posX <= -75) {
             clearInterval(animationInterval);
             clearInterval(flightInterval);
             clearInterval(scrollingInterval);
-            insect.remove();
+            bug.remove();
           }
-        }, scrollingSpeed * 1.75);
+        }, scrollingSpeed);
       }
 
       /* Bullet Creation */
@@ -223,6 +244,16 @@
           bulletX += 3;
           bulletImg.style.left = bulletX + 'px';
 
+          let collision = checkOverlap(bulletImg);
+
+          if (collision) {
+            clearInterval(bulletMovingId);
+            bulletImg.remove();
+            collision.remove();
+            ++points;
+            pointsContainer.innerText = "Bugs: " + points;
+          }
+
           if (bulletX > window.innerWidth + 100) {
             clearInterval(bulletMovingId);
             bulletImg.remove();
@@ -232,7 +263,7 @@
 
       // Random Monsters Generation
       function spawnMonsters() {
-        let nextSpawn = getRandomInt(2000, 7000);
+        let nextSpawn = getRandomInt(2000, 5000);
 
         setTimeout(function () {
           let positionY = getRandomInt(minHeight, maxHeight);
@@ -245,6 +276,28 @@
 
       function getRandomInt(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      /* Collision Check */
+      function checkOverlap(firstElement) {
+        let bugs = document.getElementsByClassName("bug");
+
+        let overlap = false;
+        for (let i = 0; i < bugs.length; i++) {
+          let rect1 = firstElement.getBoundingClientRect();
+          let rect2 = bugs[i].getBoundingClientRect();
+          overlap = !(rect1.right < rect2.left ||
+            rect1.left > rect2.right ||
+            rect1.bottom < rect2.top ||
+            rect1.top > rect2.bottom);
+
+          if (overlap) {
+            return bugs[i];
+            break;
+          }
+        }
+
+        return overlap;
       }
 
       spawnMonsters();
